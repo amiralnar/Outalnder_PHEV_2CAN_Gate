@@ -1,5 +1,6 @@
 #include <mcp_can.h>
 #include <SPI.h>
+#include <avr/wdt.h>
 
 byte EEMEM filterEnabled_addr;
 
@@ -10,6 +11,9 @@ byte ecoStatusCurr = 0;
 byte ecoStatusPrev = 2;
 byte ecoChangeStep = 0;
 unsigned long ecoTimer = 0;
+bool acecuStatusCurr;
+bool etacsStatusCurr;
+unsigned long statusTimer;
 
 unsigned long rxId;
 byte len;
@@ -32,6 +36,12 @@ CANFrame OutFrame;
 
 void setup()
 {
+	
+  wdt_disable();
+  acecuStatusCurr = false;
+  etacsStatusCurr = false;
+  statusTimer = 0;
+	
   Serial.begin(115200);
   
   // init CAN0 bus, baudrate: 250k@8MHz
@@ -56,11 +66,18 @@ void setup()
   //  filterEnabled = 1;
     //eeprom_write_byte(&filterEnabled_addr, filterEnabled);
   //};
+	
+  statusTimer = millis();
+  wdt_enable(WDTO_2S);
 
 }
 
 void loop(){
   currentMillis = millis();
+  if(acecuStatusCurr && etacsStatusCurr)
+  {
+    wdt_reset();
+  }
   
   if(!digitalRead(2)){                         // If pin 2 is low, read CAN0 receive buffer
     //CAN0.readMsgBuf(&rxId, &len, rxBuf);       // Read data: len = data length, buf = data byte(s)
@@ -126,7 +143,7 @@ void readStatus(CANFrame *msg)
         //ecoTimer = 0;
       }
               
-      if(ecoChangeStep>=4)
+      if(ecoChangeStep>=3)
       {
         //Инвертируем состояние фильтра
         filterEnabled = !filterEnabled;
@@ -137,5 +154,13 @@ void readStatus(CANFrame *msg)
       
     }
     ecoStatusPrev = ecoStatusCurr;
+  }
+  if(msg->ID == 0x185) 
+  {
+    acecuStatusCurr = true;
+  }
+  if(msg->ID == 0x154)
+  {
+    etacsStatusCurr = true;
   }
 }
