@@ -73,32 +73,29 @@ void setup()
 
 void loop(){
   currentMillis = millis();
+    // Перезапуск watchdog перед основной логикой
   wdt_reset();
   
-  if(!digitalRead(2)){                         // If pin 2 is low, read CAN0 receive buffer
-    //CAN0.readMsgBuf(&rxId, &len, rxBuf);       // Read data: len = data length, buf = data byte(s)
-   
-    if (CAN0.checkReceive() == CAN_MSGAVAIL) {
+  if(!digitalRead(2)){                         
+    if (CAN0.checkReceive() == CAN_MSGAVAIL) {  // Проверяем, есть ли сообщение
       CAN0.readMsgBuf(&OutFrame.ID, &OutFrame.Length, OutFrame.Data);
+      if(filterEnabled) {
+        filter(&OutFrame);
+      }
+      CAN1.sendMsgBuf(OutFrame.ID, 0, OutFrame.Length, OutFrame.Data);
+      readStatus(&OutFrame);
     }
-    if(filterEnabled==1)
-    {
-      filter(&OutFrame);
-    }
-    CAN1.sendMsgBuf(OutFrame.ID, 0, OutFrame.Length,  OutFrame.Data);      // Immediately send message out CAN1 interface
-    readStatus(&OutFrame);
   }
-  if(!digitalRead(3)){                         // If pin 3 is low, read CAN1 receive buffer
-    CAN1.readMsgBuf(&OutFrame.ID, &OutFrame.Length, OutFrame.Data);       // Read data: len = data length, buf = data byte(s)
-    if (CAN1.checkReceive() == CAN_MSGAVAIL) {
+
+  if(!digitalRead(3)){                         
+    if (CAN1.checkReceive() == CAN_MSGAVAIL) {  // Проверяем, есть ли сообщение
       CAN1.readMsgBuf(&OutFrame.ID, &OutFrame.Length, OutFrame.Data);
+      if(filterEnabled) {
+        filter(&OutFrame);
+      }
+      CAN0.sendMsgBuf(OutFrame.ID, 0, OutFrame.Length, OutFrame.Data);
+      readStatus(&OutFrame);
     }
-    if(filterEnabled==1)
-    {
-      filter(&OutFrame);
-    }
-    CAN0.sendMsgBuf(OutFrame.ID, 0, OutFrame.Length,  OutFrame.Data);      // Immediately send message out CAN0 interface
-    readStatus(&OutFrame);
   }
 }
 
