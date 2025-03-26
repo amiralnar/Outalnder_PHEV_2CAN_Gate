@@ -55,7 +55,7 @@ void setup()
     CAN1.setMode(MCP_NORMAL);
   } else Serial.print("CAN1: Init Fail!!!\r\n");
   
-  //SPI.setClockDivider(SPI_CLOCK_DIV2);         // Set SPI to run at 8MHz (16MHz / 2 = 8 MHz)
+  SPI.setClockDivider(SPI_CLOCK_DIV2);         // Set SPI to run at 8MHz (16MHz / 2 = 8 MHz)
   
   filterEnabled = 1;
   //filterEnabled = eeprom_read_byte(&filterEnabled_addr);
