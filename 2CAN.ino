@@ -37,7 +37,6 @@ CANFrame OutFrame;
 void setup()
 {
 	
-  wdt_disable();
   acecuStatusCurr = false;
   etacsStatusCurr = false;
   statusTimer = 0;
@@ -74,14 +73,14 @@ void setup()
 
 void loop(){
   currentMillis = millis();
-  if(acecuStatusCurr && etacsStatusCurr)
-  {
-    wdt_reset();
-  }
+  wdt_reset();
   
   if(!digitalRead(2)){                         // If pin 2 is low, read CAN0 receive buffer
     //CAN0.readMsgBuf(&rxId, &len, rxBuf);       // Read data: len = data length, buf = data byte(s)
-    CAN0.readMsgBuf(&OutFrame.ID, &OutFrame.Length, OutFrame.Data);
+   
+    if (CAN0.checkReceive() == CAN_MSGAVAIL) {
+      CAN0.readMsgBuf(&OutFrame.ID, &OutFrame.Length, OutFrame.Data);
+    }
     if(filterEnabled==1)
     {
       filter(&OutFrame);
@@ -91,6 +90,9 @@ void loop(){
   }
   if(!digitalRead(3)){                         // If pin 3 is low, read CAN1 receive buffer
     CAN1.readMsgBuf(&OutFrame.ID, &OutFrame.Length, OutFrame.Data);       // Read data: len = data length, buf = data byte(s)
+    if (CAN1.checkReceive() == CAN_MSGAVAIL) {
+      CAN1.readMsgBuf(&OutFrame.ID, &OutFrame.Length, OutFrame.Data);
+    }
     if(filterEnabled==1)
     {
       filter(&OutFrame);
